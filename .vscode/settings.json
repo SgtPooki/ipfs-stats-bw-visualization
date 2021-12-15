@@ -1,0 +1,8 @@
+{
+    "jest.autoRun": "off",
+    "jest.jestCommandLine": "$(npm bin)/react-scripts test",
+    "cSpell.words": [
+        "IPFSHTTP",
+        "tsnode"
+    ]
+}
