@@ -1,7 +1,6 @@
 import {
     scaleLinear,
     scaleTime,
-    min,
     max,
     select,
     axisBottom,
@@ -33,11 +32,6 @@ type MultilineChartProps = {
     timeWindow?: TimeSelection;
     bwStats?: BandwidthData;
 };
-
-const cachedData: BandwidthData[] = [];
-const dataObservable = new Observable<BandwidthData[]>([]);
-
-const MAX_DATAPOINTS = 24 * 60 * 60; // do not exceed
 
 const MultilineChart = ({
     // data,

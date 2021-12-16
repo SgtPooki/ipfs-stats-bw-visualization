@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { BWResult } from 'ipfs-core-types/src/stats';
-
 import { Observable } from '../../hof/observable';
 
 // type BwStatPropertyOption = 'rateIn' | 'rateOut';

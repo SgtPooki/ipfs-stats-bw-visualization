@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-async-hook';
 
 import type { BWOptions } from 'ipfs-core-types/src/stats';
@@ -15,15 +15,10 @@ const defaultBwStatsOptions: BWOptions = {
 
 async function getBwObservable(): Promise<Observable<BandwidthData>> {
     const bwStats = await ipfsStatsBw({ poll: false });
-    // let lastStat: BandwidthData;
-    // let bwStatsObservable: ;
+
     const item = bwStats[Symbol.asyncIterator]();
 
     const next = await item.next();
-    // This loop should only run once.
-    // while (!next.done) {
-    //     next = await item.next();
-    // }
 
     return new Observable(next.value);
 }
