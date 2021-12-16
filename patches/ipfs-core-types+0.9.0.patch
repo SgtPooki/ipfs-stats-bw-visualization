@@ -1,0 +1,13 @@
+diff --git a/node_modules/ipfs-core-types/src/stats/index.ts b/node_modules/ipfs-core-types/src/stats/index.ts
+index 43e5f24..30dbf86 100644
+--- a/node_modules/ipfs-core-types/src/stats/index.ts
++++ b/node_modules/ipfs-core-types/src/stats/index.ts
+@@ -16,7 +16,7 @@ export interface BWOptions extends AbortOptions {
+   peer?: string
+   proto?: string
+   poll?: boolean
+-  interval?: number
++  interval?: string
+ }
+ 
+ export interface BWResult {

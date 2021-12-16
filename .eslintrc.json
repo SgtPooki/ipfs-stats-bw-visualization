@@ -9,17 +9,23 @@
         "prettier",
         "plugin:import/errors",
         "plugin:import/warnings",
-        "plugin:import/typescript",
-        "plugin:lodash/recommended"
+        "plugin:import/typescript"
     ],
     "ignorePatterns": ["!**/User/*.json"],
     "overrides": [
         {
-            "files": ["lib/**/*.{js,ts}", "types/**/*.{js,ts}"]
+            "files": [
+                "lib/**/*.{js,jsx,ts,tsx}",
+                "types/**/*.{js,jsx,ts,tsx}",
+                "src/client/**/*.{js,jsx,ts,tsx}"
+            ]
         },
         {
             "files": [".eslintrc.json", "cdk.json"],
-            "extends": ["plugin:jsonc/recommended-with-jsonc", "plugin:jsonc/prettier"],
+            "extends": [
+                "plugin:jsonc/recommended-with-jsonc",
+                "plugin:jsonc/prettier"
+            ],
             "rules": {
                 "jsonc/comma-dangle": ["error", "never"],
                 "comma-dangle": ["error", "never"]
@@ -27,7 +33,10 @@
         },
         {
             "files": [".prettierrc.json", "package.json"],
-            "extends": ["plugin:jsonc/recommended-with-json", "plugin:jsonc/prettier"]
+            "extends": [
+                "plugin:jsonc/recommended-with-json",
+                "plugin:jsonc/prettier"
+            ]
         },
         {
             "files": [".vscode/*.json", "tsconfig.json", "src/**/*.json"],
@@ -42,17 +51,32 @@
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 2019,
-        "extraFileExtensions": [
-        ],
+        "extraFileExtensions": [],
         "sourceType": "module",
         "tsconfigRootDir": "./"
     },
-    "plugins": ["@typescript-eslint", "lodash", "prettier", "import", "jsonc"],
+    // "import/resolvers": {
+    //     "@typescript-eslint/parser": [".ts", ".tsx"],
+    // },
+    "plugins": [
+        "@typescript-eslint",
+        "prettier",
+        "import",
+        "jsonc",
+        "react-hooks"
+    ],
     "rules": {
-        "@typescript-eslint/explicit-module-boundary-types": "error",
+        "react-hooks/rules-of-hooks": "error",
+        "react-hooks/exhaustive-deps": [
+            "error",
+            {
+                "additionalHooks": "(useAsync|useAsyncCallback)"
+            }
+        ],
+        "@typescript-eslint/explicit-module-boundary-types": "warn",
         "@typescript-eslint/no-explicit-any": "error",
         "@typescript-eslint/no-namespace": "off",
-        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-unused-vars": "warn",
         "eol-last": "error",
         "import/group-exports": "error",
         "import/order": [
@@ -62,7 +86,13 @@
                     "caseInsensitive": false,
                     "order": "asc"
                 },
-                "groups": ["builtin", "external", "internal", ["parent", "sibling", "index"], "object"],
+                "groups": [
+                    "builtin",
+                    "external",
+                    "internal",
+                    ["parent", "sibling", "index"],
+                    "object"
+                ],
                 "newlines-between": "always",
                 "pathGroups": [
                     {
@@ -95,10 +125,6 @@
         ],
         "indent": "off",
         "linebreak-style": ["error", "unix"],
-        "lodash/import-scope": "warn", // TODO: flip to error
-        "lodash/path-style": "off", // TODO: flip to error
-        "lodash/prefer-immutable-method": "warn", // TODO: flip to error
-        "lodash/prefer-lodash-method": "warn", // TODO: flip to error
         "newline-before-return": "error",
         "no-mixed-spaces-and-tabs": "error",
         "no-prototype-builtins": "off",

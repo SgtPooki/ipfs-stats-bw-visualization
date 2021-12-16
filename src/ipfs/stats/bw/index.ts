@@ -3,12 +3,32 @@ import { BWOptions, BWResult } from 'ipfs-core-types/src/stats';
 
 import { getIpfsClient } from '../../core/client';
 
-async function* ipfsStatsBw(options?: BWOptions): AsyncIterable<BWResult> {
+type BandwidthData = BWResult & {
+    date: Date;
+};
+const noData: BWResult = {
+    totalIn: BigInt(0),
+    totalOut: BigInt(0),
+    rateIn: 0,
+    rateOut: 0,
+};
+
+async function* ipfsStatsBw(options?: BWOptions): AsyncIterable<BandwidthData> {
     const ipfs = await getIpfsClient();
 
-    for await (const stats of ipfs.stats.bw(options)) {
-        yield stats;
+    const iterator = ipfs.stats.bw(options)[Symbol.asyncIterator]();
+
+    let next = await iterator.next();
+
+    while (!next.done) {
+        try {
+            yield { ...next.value, date: new Date() };
+            next = await iterator.next();
+        } catch (err) {
+            yield { ...noData, date: new Date() };
+        }
     }
 }
 
+export type { BandwidthData };
 export { ipfsStatsBw };

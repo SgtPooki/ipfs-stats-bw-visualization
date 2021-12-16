@@ -3,5 +3,6 @@
  *
  * Starts up the ipfs server and the react server.
  */
+import { clientStart } from './client';
 
-export {}
+clientStart();
