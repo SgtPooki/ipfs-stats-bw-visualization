@@ -14,6 +14,7 @@ const noData: BWResult = {
 };
 
 async function* ipfsStatsBw(options?: BWOptions): AsyncIterable<BandwidthData> {
+    console.log('inside ipfsStatsBw');
     const ipfs = await getIpfsClient();
 
     const iterator = ipfs.stats.bw(options)[Symbol.asyncIterator]();

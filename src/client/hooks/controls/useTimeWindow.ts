@@ -82,10 +82,10 @@ const timeOptions: TimeSelection[] = [
             return 1;
         }
     });
-console.log(TimeUnitRank['days']);
+
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const defaultTimeSelection = timeOptions.find(
-    (o) => o.value === 1 && o.unit === TimeUnit.hours,
+    (o) => o.value === 60 && o.unit === TimeUnit.seconds,
 )!;
 
 const globalHookId = 'global';

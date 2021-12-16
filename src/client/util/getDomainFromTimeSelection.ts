@@ -1,4 +1,4 @@
-import { TimeSelection, TimeUnit } from '../hooks/viz/useTimeWindow';
+import { TimeSelection, TimeUnit } from '../hooks/controls/useTimeWindow';
 
 /**
  * Return the start & end dates for a d3 graph, given a TimeSelection.

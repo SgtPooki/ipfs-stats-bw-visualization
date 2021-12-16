@@ -1,7 +1,5 @@
-import * as d3 from 'd3';
 import {
     scaleLinear,
-    extent,
     scaleTime,
     min,
     max,
@@ -10,16 +8,18 @@ import {
     axisLeft,
     line,
 } from 'd3';
-import React, { useEffect, useRef, useState } from 'react';
-import { useAsync } from 'react-async-hook';
+import { useEffect, useRef, useState } from 'react';
 
-import { BandwidthData } from '../../../ipfs/stats/bw';
-import { useIpfsBandwidth } from '../../hooks/ipfs/useIpfsBandwidth';
+import { BWOptions } from 'ipfs-core-types/src/stats';
+
+import { BandwidthData, ipfsStatsBw } from '../../../ipfs/stats/bw';
+import { Observable } from '../../hof/observable';
+import { useBwStatProperty } from '../../hooks/controls/useBwStatProperty';
 import {
     TimeSelection,
     TimeUnit,
     useTimeWindow,
-} from '../../hooks/viz/useTimeWindow';
+} from '../../hooks/controls/useTimeWindow';
 import { getDomainFromTimeSelection } from '../../util/getDomainFromTimeSelection';
 
 type MultilineChartDimensions = {
@@ -30,49 +30,97 @@ type MultilineChartDimensions = {
 type MultilineChartProps = {
     // data: MultilineChartData;
     dimensions: MultilineChartDimensions;
-    timeWindow: TimeSelection;
+    timeWindow?: TimeSelection;
     bwStats?: BandwidthData;
 };
+
+const cachedData: BandwidthData[] = [];
+const dataObservable = new Observable<BandwidthData[]>([]);
+
+const MAX_DATAPOINTS = 24 * 60 * 60; // do not exceed
 
 const MultilineChart = ({
     // data,
     dimensions,
-    timeWindow,
-    bwStats,
-}: MultilineChartProps): JSX.Element => {
+}: // timeWindow,
+// bwStats,
+MultilineChartProps): JSX.Element => {
     const svgRef = useRef(null);
+    const { timeWindow } = useTimeWindow();
+    const { property: selectedProperty } = useBwStatProperty();
     const [data, setData] = useState([] as BandwidthData[]);
+    const [property] = useState(selectedProperty);
+    const [bwStatsIterator] = useState<AsyncIterable<BandwidthData>>(() => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
+        const bwOptions: BWOptions = { poll: true, interval: '1s' };
+
+        return ipfsStatsBw(bwOptions);
+    });
+    // const [MAX_DATA, setMaxData] = useState(1000);
+    const xdomain = getDomainFromTimeSelection(timeWindow);
+
+    const [MAX_DATA] = useState(() => {
+        return new Observable<number>(1000);
+    });
 
     useEffect(() => {
-        const addBwStats = (bwStats: BandwidthData) => {
-            setData([...data, bwStats]);
-        };
-
-        if (bwStats) {
-            addBwStats(bwStats);
+        let max_data: number;
+        switch (timeWindow.unit) {
+            case TimeUnit.days:
+                max_data = 24 * 60 * 60 * timeWindow.value;
+                break;
+            case TimeUnit.hours:
+                max_data = 60 * 60 * timeWindow.value;
+                break;
+            case TimeUnit.minutes:
+                max_data = 60 * timeWindow.value;
+                break;
+            case TimeUnit.seconds:
+                max_data = timeWindow.value;
+                break;
+            default:
+                max_data = 1000;
         }
+        MAX_DATA.set(max_data);
+    }, [MAX_DATA, timeWindow]);
+
+    useEffect(() => {
+        (async () => {
+            for await (const bwStats of bwStatsIterator) {
+                setData((oldData) => {
+                    const excessDataPoints = oldData.length - MAX_DATA.get();
+
+                    if (excessDataPoints > 0) {
+                        oldData.splice(0, excessDataPoints);
+                    }
+
+                    return [...oldData, bwStats];
+                });
+            }
+        })();
+    }, [bwStatsIterator, data, MAX_DATA]);
+
+    useEffect(() => {
         const { width, height, margin } = dimensions;
-        const xdomain = getDomainFromTimeSelection(timeWindow);
-        // const sample = data[0];
-        // const sampleItems = sample.items;
-        // if (!sample || sampleItems.length === 0) {
-        //     return;
-        // }
-        // const domainArg = extent(dataArray, (d) => d.date) as [Date, Date];
+        const ydomain = [
+            0, //(min(data, (d) => d.rateIn) as number) - 50,
+            (max(
+                data,
+                (d: BandwidthData) => d[property as 'rateIn' | 'rateOut'],
+            ) as number) * 1.05,
+        ];
 
         const xScale = scaleTime().domain(xdomain).range([0, width]);
 
-        const yScale = scaleLinear()
-            .domain([
-                (min(data, (d) => d.rateIn) as number) - 50,
-                (max(data, (d) => d.rateIn) as number) + 50,
-            ])
-            .range([height, 0]);
+        const yScale = scaleLinear().domain(ydomain).range([height, 0]);
 
         // Create root container where we will append all other chart elements
         const svgEl = select(svgRef.current);
 
-        svgEl.selectAll('*').remove(); // Clear svg content before adding new elements
+        svgEl.selectAll('text').remove();
+        svgEl.selectAll('g').remove();
+        // svgEl.selectAll('.line').remove();
 
         const svg = svgEl
             .append('g')
@@ -80,7 +128,7 @@ const MultilineChart = ({
 
         // Add X grid lines with labels
         const xAxis = axisBottom(xScale)
-            .ticks(5)
+            .ticks(10)
             .tickSize(-height + margin.bottom);
 
         const xAxisGroup = svg
@@ -89,26 +137,26 @@ const MultilineChart = ({
             .call(xAxis);
 
         xAxisGroup.select('.domain').remove();
-        xAxisGroup.selectAll('line').attr('stroke', 'rgba(255, 255, 255, 0.2)');
+        xAxisGroup.selectAll('line').attr('stroke', 'rgba(40, 44, 52, 0.2)');
         xAxisGroup
             .selectAll('text')
-            .attr('opacity', 0.5)
-            .attr('color', 'white')
+            // .attr('opacity', 0.5)
+            .attr('color', '#282c34')
             .attr('font-size', '0.75rem');
 
         // Add Y grid lines with labels
         const yAxis = axisLeft(yScale)
             .ticks(5)
             .tickSize(-width)
-            .tickFormat((val) => `${val}%`);
+            .tickFormat((val) => `${val} bytes`);
 
         const yAxisGroup = svg.append('g').call(yAxis);
         yAxisGroup.select('.domain').remove();
-        yAxisGroup.selectAll('line').attr('stroke', 'rgba(255, 255, 255, 0.2)');
+        yAxisGroup.selectAll('line').attr('stroke', 'rgba(40, 44, 52, 0.2)');
         yAxisGroup
             .selectAll('text')
-            .attr('opacity', 0.5)
-            .attr('color', 'white')
+            // .attr('opacity', 0.5)
+            .attr('color', '#282c34')
             .attr('font-size', '0.75rem');
 
         // Draw the lines
@@ -124,7 +172,13 @@ const MultilineChart = ({
             .attr('stroke', '#700')
             .attr('stroke-width', 3)
             .attr('d', () => lines(data));
-    }, [data, timeWindow, bwStats, dimensions]); // Redraw chart if data changes
+    }, [data, timeWindow, dimensions, property, xdomain]); // Redraw chart if data changes
+
+    useEffect(() => {
+        const svgEl = select(svgRef.current);
+        // clear everything if any of the dependents change.
+        svgEl.selectAll('*').remove();
+    }, [property]);
 
     const { width, height, margin } = dimensions;
     const svgWidth = width + margin.left + margin.right;

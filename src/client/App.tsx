@@ -1,17 +1,11 @@
-import React, { Component, useEffect, useState } from 'react';
-import { useAsync } from 'react-async-hook';
-
-import { BandwidthData } from '../ipfs/stats/bw';
 import './App.css';
-import { BandwidthLogger } from './components/BandwidthLogger';
+import { ChartControl } from './components/ChartControl';
 import { MultilineChart } from './components/MultilineChart';
-import { TimeWindowControl } from './components/TimeWindowControl';
-import { useIpfsBandwidth } from './hooks/ipfs/useIpfsBandwidth';
-import { useTimeWindow } from './hooks/viz/useTimeWindow';
+import { useTimeWindow } from './hooks/controls/useTimeWindow';
 import logo from './logo.svg';
 
 const dimensions = {
-    width: 600,
+    width: window.innerHeight / 2,
     height: 300,
     margin: { top: 30, right: 30, bottom: 30, left: 60 },
 };
@@ -19,24 +13,28 @@ const dimensions = {
 function App(): JSX.Element {
     const { timeWindow } = useTimeWindow();
 
-    const bwStats = useIpfsBandwidth();
-
     return (
         <div className="App">
             <header className="App-header">
                 <img src={logo} className="App-logo" alt="logo" />
-                <p>
-                    Edit <code>src/App.tsx</code> and save to reload.
-                </p>
-                <TimeWindowControl />
+                <div className="instructions">
+                    <p>Sample ipfs.stats.bw viewer.</p>
+                    <span>
+                        You can use the controls below to change the query that
+                        is being sent to the ipfs node.
+                    </span>
+                </div>
+            </header>
+
+            <div>
+                <ChartControl />
                 <MultilineChart
                     // data={[schcData]}
                     dimensions={dimensions}
                     timeWindow={timeWindow}
-                    bwStats={bwStats}
+                    // bwStats={bwStats}
                 />
-            </header>
-            <BandwidthLogger />
+            </div>
         </div>
     );
 }
